@@ -10,7 +10,7 @@ from startupflow_ai.chunking import chunk_corpus, load_documents
 from startupflow_ai.config import Settings
 from startupflow_ai.dense import Embedder
 from startupflow_ai.generate import NOT_FOUND, Generator, build_context, guess_lang
-from startupflow_ai.grounding import unsupported_numbers
+from startupflow_ai.grounding import entity_mismatch, unsupported_numbers
 from startupflow_ai.retriever import Retriever
 from startupflow_ai.schemas import AskResponse, Source
 from startupflow_ai.text import normalize
@@ -24,6 +24,7 @@ class RAGPipeline:
         self.embedder = Embedder(self.s.embed_model)
         self.chunks = chunk_corpus(load_documents(self.s.corpus_dir), self.s.chunking)
         self.retriever = Retriever(self.chunks, self.embedder)
+        self.titles = {c.title for c in self.chunks}
         self._load_llm = load_llm
 
     @cached_property
@@ -58,13 +59,14 @@ class RAGPipeline:
                 grounded=True,
                 unsupported_numbers=[],
                 timings_ms=timings,
+                note=f"retrieval gate: top score {top_dense:.3f} < {self.s.min_score}",
             )
 
         t1 = time.perf_counter()
         llm, _raw = self.generator.answer(question, chunks)
         timings["generate"] = (time.perf_counter() - t1) * 1000
 
-        if not llm.found:
+        def abstain(note: str) -> AskResponse:
             return AskResponse(
                 found=False,
                 answer=NOT_FOUND[guess_lang(question)],
@@ -73,9 +75,16 @@ class RAGPipeline:
                 grounded=True,
                 unsupported_numbers=[],
                 timings_ms=timings,
+                note=note,
             )
-        cited = build_context([chunks[c - 1] for c in llm.citations])
-        bad_numbers = unsupported_numbers(llm.answer, cited)
+
+        if not llm.found:
+            return abstain("model: not in context")
+        cited_chunks = [chunks[c - 1] for c in llm.citations]
+        if entity_mismatch(question, [c.title for c in cited_chunks], self.titles):
+            log.info("abstain: cited passages are about a different company")
+            return abstain("entity mismatch between question and cited passages")
+        bad_numbers = unsupported_numbers(llm.answer, build_context(cited_chunks))
         return AskResponse(
             found=True,
             answer=llm.answer,
@@ -83,5 +92,6 @@ class RAGPipeline:
             sources=sources,
             grounded=not bad_numbers,
             unsupported_numbers=bad_numbers,
+            citations_inferred=llm.citations_inferred,
             timings_ms=timings,
         )

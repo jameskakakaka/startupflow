@@ -47,3 +47,27 @@ def min_sentence_support(answer: str, context: str, embed: Callable[[list[str]],
         return 0.0
     a, c = embed(a_sents), embed(c_sents)
     return float((a @ c.T).max(axis=1).min())
+
+
+def _compact(text: str) -> str:
+    """'NôngTrại360' / 'nong trai 360' -> 'nongtrai360' for robust name matching."""
+    from startupflow_ai.text import fold_diacritics
+
+    return re.sub(r"[^a-z0-9]", "", fold_diacritics(text.lower()))
+
+
+def entities_in_question(question: str, titles: set[str]) -> set[str]:
+    """Company names (document titles) mentioned in the question, accent/space-insensitive."""
+    q = _compact(question)
+    return {t for t in titles if _compact(t) and _compact(t) in q}
+
+
+def entity_mismatch(question: str, cited_titles: list[str], all_titles: set[str]) -> bool:
+    """True if the question names a company but none of the cited passages is about it.
+
+    Catches cross-entity hallucination: asked about ShipNhanh, answered with a
+    number from HọcVui's memo. The numeric check cannot see this, because the
+    number really is in the (wrong) cited passage.
+    """
+    asked = entities_in_question(question, all_titles)
+    return bool(asked) and not (asked & set(cited_titles))
