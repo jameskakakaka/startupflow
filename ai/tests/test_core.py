@@ -8,7 +8,7 @@ import pytest
 from startupflow_ai.bm25 import BM25
 from startupflow_ai.chunking import Document, fixed_size_chunks, heading_chunks
 from startupflow_ai.dense import cosine_top_k
-from startupflow_ai.grounding import unsupported_numbers
+from startupflow_ai.grounding import entity_mismatch, unsupported_numbers
 from startupflow_ai.hybrid import rrf
 from startupflow_ai.metrics import mrr, recall_at_k
 from startupflow_ai.schemas import AskRequest, parse_llm_answer
@@ -75,13 +75,43 @@ def test_metrics():
     assert mrr(flags) == pytest.approx((0.5 + 1 + 0) / 3)
 
 
+PASSAGES = ["Acme | Acme is raising 3 million USD.", "Beta | Beta has 40 employees."]
+
+
 def test_parse_llm_answer_validates_and_filters_citations():
     ok = parse_llm_answer('noise {"found": true, "answer": "x", "citations": [1, 9]} tail', 3)
     assert ok and ok.citations == [1]
     assert parse_llm_answer("not json", 3) is None
     assert parse_llm_answer('{"found": "maybe"}', 3) is None
-    # found=true with no valid citation is downgraded to not found
+    # found=true with no valid or inferable citation is downgraded to not found
     assert parse_llm_answer('{"found": true, "answer": "x", "citations": [7]}', 3).found is False
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        '```json\n{"found": true, "answer": "Acme raises 3 million USD", "citations": ["[1]"]}\n```',
+        '{"found": true, "answer": "Acme raises 3 million USD", "citations": [{"passage_number": 1}]}',
+        '{"found": true, "answer": "Acme raises 3 million USD", "citations": ["Acme is raising 3 million"]}',
+        '{"found": true, "answer": "Acme raises 3 million USD", "citations": [passage numbers 1]}',
+    ],
+)
+def test_parse_repairs_common_small_model_citation_formats(raw):
+    parsed = parse_llm_answer(raw, 2, PASSAGES)
+    assert parsed and parsed.found and parsed.citations == [1] and not parsed.citations_inferred
+
+
+def test_parse_infers_citation_from_numbers_when_missing():
+    parsed = parse_llm_answer('{"found": true, "answer": "40 employees", "citations": []}', 2, PASSAGES)
+    assert parsed.citations == [2] and parsed.citations_inferred
+
+
+def test_entity_mismatch():
+    titles = {"ShipNhanh", "HọcVui", "NôngTrại360"}
+    assert entity_mismatch("Doanh thu của ShipNhanh?", ["HọcVui"], titles)
+    assert not entity_mismatch("Doanh thu của ShipNhanh?", ["ShipNhanh"], titles)
+    assert not entity_mismatch("nong trai 360 tiet kiem nuoc?", ["NôngTrại360"], titles)
+    assert not entity_mismatch("Which startup does wage access?", ["HọcVui"], titles)
 
 
 def test_unsupported_numbers_handles_vi_and_en_formats():
