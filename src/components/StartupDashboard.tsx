@@ -5,6 +5,8 @@ import {
   useState,
 } from "react";
 
+import Link from "next/link";
+
 import type {
   NewStartup,
   Startup,
@@ -205,9 +207,14 @@ export default function StartupDashboard() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-        StartupFlow
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          StartupFlow
+        </h1>
+        <Link href="/ask" className="font-medium hover:underline">
+          Ask the memos →
+        </Link>
+      </div>
 
       <section className="mt-8">
         <h2 className="text-xl font-semibold">
