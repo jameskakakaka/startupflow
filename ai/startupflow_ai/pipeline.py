@@ -9,8 +9,8 @@ from functools import cached_property
 from startupflow_ai.chunking import chunk_corpus, load_documents
 from startupflow_ai.config import Settings
 from startupflow_ai.dense import Embedder
-from startupflow_ai.generate import NOT_FOUND, Generator, build_context, guess_lang
-from startupflow_ai.grounding import entity_mismatch, unsupported_numbers
+from startupflow_ai.generate import NOT_FOUND, Generator, guess_lang
+from startupflow_ai.grounding import verify_answer
 from startupflow_ai.retriever import Retriever
 from startupflow_ai.schemas import AskResponse, Source
 from startupflow_ai.text import normalize
@@ -80,18 +80,19 @@ class RAGPipeline:
 
         if not llm.found:
             return abstain("model: not in context")
-        cited_chunks = [chunks[c - 1] for c in llm.citations]
-        if entity_mismatch(question, [c.title for c in cited_chunks], self.titles):
-            log.info("abstain: cited passages are about a different company")
-            return abstain("entity mismatch between question and cited passages")
-        bad_numbers = unsupported_numbers(llm.answer, build_context(cited_chunks))
+        v = verify_answer(
+            question, llm.answer, llm.citations, [(c.title, c.text) for c in chunks], self.titles
+        )
+        if not v.ok:
+            log.info("abstain: %s", v.note)
+            return abstain(v.note)
         return AskResponse(
             found=True,
             answer=llm.answer,
-            citations=llm.citations,
+            citations=v.citations,
             sources=sources,
-            grounded=not bad_numbers,
-            unsupported_numbers=bad_numbers,
-            citations_inferred=llm.citations_inferred,
+            grounded=True,
+            unsupported_numbers=[],
+            citations_inferred=llm.citations_inferred or v.inferred,
             timings_ms=timings,
         )

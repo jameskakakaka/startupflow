@@ -8,7 +8,7 @@ import pytest
 from startupflow_ai.bm25 import BM25
 from startupflow_ai.chunking import Document, fixed_size_chunks, heading_chunks
 from startupflow_ai.dense import cosine_top_k
-from startupflow_ai.grounding import entity_mismatch, unsupported_numbers
+from startupflow_ai.grounding import entity_mismatch, unsupported_numbers, verify_answer
 from startupflow_ai.hybrid import rrf
 from startupflow_ai.metrics import mrr, recall_at_k
 from startupflow_ai.schemas import AskRequest, parse_llm_answer
@@ -126,3 +126,34 @@ def test_ask_request_validation():
         AskRequest(question="  ")
     with pytest.raises(ValueError):
         AskRequest(question="x" * 501)
+
+
+P = [
+    ("ShipNhanh", "ShipNhanh | 310.000 đơn mỗi tháng"),
+    ("HọcVui", "HọcVui | Doanh thu năm 2025 đạt 48 tỷ đồng"),
+]
+T = {"ShipNhanh", "HọcVui"}
+
+
+def test_verify_reattributes_wrong_citation_number():
+    v = verify_answer("ShipNhanh giao bao nhiêu đơn?", "310.000 đơn", [2], P, T)
+    assert v.ok and v.citations == [1] and v.inferred
+
+
+def test_verify_rejects_cross_entity_number():
+    v = verify_answer("Doanh thu 2025 của ShipNhanh?", "Doanh thu năm 2025 đạt 48 tỷ đồng", [1], P, T)
+    assert not v.ok and "entity" in v.note
+
+
+def test_verify_rejects_unsupported_number_and_degenerate_answers():
+    assert "numbers" in verify_answer("ShipNhanh?", "999 đơn", [1], P, T).note
+    assert not verify_answer("ShipNhanh?", "[2]", [2], P, T).ok
+    assert not verify_answer("shipnhanh giao bao nhieu don", "ShipNhanh giao bao nhiêu đơn", [1], P, T).ok
+
+
+def test_verify_keeps_short_entity_answer_that_reuses_question_words():
+    p = [("Vay Nông Dân", "Vay Nông Dân | cho nông dân vay mua phân bón")]
+    v = verify_answer(
+        "Startup nào cho nông dân trồng lúa vay để mua phân bón?", "Vay Nông Dân", [1], p, set()
+    )
+    assert v.ok

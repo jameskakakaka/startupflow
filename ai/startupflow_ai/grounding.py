@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -71,3 +72,54 @@ def entity_mismatch(question: str, cited_titles: list[str], all_titles: set[str]
     """
     asked = entities_in_question(question, all_titles)
     return bool(asked) and not (asked & set(cited_titles))
+
+
+@dataclass
+class Verdict:
+    ok: bool
+    citations: list[int]
+    inferred: bool = False
+    note: str = ""
+
+
+def _word_set(text: str) -> set[str]:
+    from startupflow_ai.text import tokenize
+
+    return set(tokenize(text))
+
+
+def verify_answer(
+    question: str,
+    answer: str,
+    citations: list[int],
+    passages: list[tuple[str, str]],
+    all_titles: set[str],
+) -> Verdict:
+    """Post-generation checks, in order. `passages` = [(title, text)] of the retrieved
+    chunks, 1-based like the citations. Any failure means: do not show the answer.
+
+    1. Degenerate output: only citation markers / punctuation, or an echo of the question.
+    2. Numbers: every number must be in the cited passages. If the model cited the
+       wrong passage number but another retrieved passage contains all the numbers,
+       re-attribute the citation (flagged as inferred); otherwise reject.
+    3. Entity: the (possibly re-attributed) cited passages must be about the company
+       the question names.
+    """
+    content = re.sub(r"\[\d+\]|\W", "", answer)
+    if len(content) < 2:
+        return Verdict(False, [], note="degenerate answer")
+    a_words, q_words = _word_set(answer), _word_set(question)
+    if len(a_words) >= 3 and a_words <= q_words and len(a_words) >= 0.6 * len(q_words):
+        return Verdict(False, [], note="answer only repeats the question")
+
+    inferred = False
+    cited_text = "\n".join(passages[c - 1][1] for c in citations)
+    if unsupported_numbers(answer, cited_text):
+        support = [i for i, (_, t) in enumerate(passages, start=1) if not unsupported_numbers(answer, t)]
+        if not support:
+            return Verdict(False, [], note="numbers not found in any retrieved passage")
+        citations, inferred = support[:2], True
+
+    if entity_mismatch(question, [passages[c - 1][0] for c in citations], all_titles):
+        return Verdict(False, [], note="entity mismatch between question and cited passages")
+    return Verdict(True, citations, inferred)
