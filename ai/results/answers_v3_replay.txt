@@ -1,0 +1,7 @@
+answer accuracy (answerable): 17/32 = 0.53
+false abstention:             8/32
+correct abstention (no-ans):  6/10
+answer precision (answered):  17/28 = 0.61
+  rejected q15 (answerable): degenerate answer
+  rejected q17 (answerable): answer only repeats the question
+  rejected q36 (no-answer): entity mismatch between question and cited passages
