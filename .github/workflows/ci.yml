@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "refine/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+
+  ai:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Unit tests are model-free, so CI needs only the light dependencies.
+      - run: pip install numpy==2.5.5 pydantic==2.14.4 fastapi==0.165.0 httpx==0.28.1 pytest==9.2.0 ruff==0.17.6
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest -q
