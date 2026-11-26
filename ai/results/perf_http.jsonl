@@ -1,0 +1,2 @@
+{"name": "http /ask, concurrency=1", "n": 10, "p50_ms": 28325.4, "p95_ms": 60332.4, "throughput_rps": 0.03}
+{"name": "http /ask, concurrency=2", "n": 10, "p50_ms": 44560.2, "p95_ms": 60077.0, "throughput_rps": 0.04}

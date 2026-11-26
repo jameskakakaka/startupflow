@@ -1,0 +1,2 @@
+{"name": "retrieval hybrid, cache=off", "n": 210, "p50_ms": 83.2, "p95_ms": 262.2, "throughput_rps": 8.91}
+{"name": "retrieval hybrid, cache=on", "n": 210, "p50_ms": 0.2, "p95_ms": 169.4, "throughput_rps": 35.78}
