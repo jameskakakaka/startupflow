@@ -77,52 +77,48 @@ export async function createStartup(
   return toStartup(startup);
 }
 
+/**
+ * Prisma throws P2025 when the row to update/delete does not exist.
+ * Catching it (instead of a separate findUnique first) avoids a
+ * check-then-act race between concurrent PATCH and DELETE requests.
+ */
+function isRecordNotFound(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code: unknown }).code === "P2025"
+  );
+}
+
 export async function updateStartup(
   id: string,
   data: UpdateStartup
 ): Promise<Startup | null> {
-  const existing =
-    await db.startup.findUnique({
-      where: {
-        id,
-      },
-    });
-
-  if (!existing) {
-    return null;
-  }
-
-  const startup =
-    await db.startup.update({
-      where: {
-        id,
-      },
-
+  try {
+    const startup = await db.startup.update({
+      where: { id },
       data,
     });
-
-  return toStartup(startup);
+    return toStartup(startup);
+  } catch (error) {
+    if (isRecordNotFound(error)) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function deleteStartup(
   id: string
 ): Promise<boolean> {
-  const existing =
-    await db.startup.findUnique({
-      where: {
-        id,
-      },
-    });
-
-  if (!existing) {
-    return false;
+  try {
+    await db.startup.delete({ where: { id } });
+    return true;
+  } catch (error) {
+    if (isRecordNotFound(error)) {
+      return false;
+    }
+    throw error;
   }
-
-  await db.startup.delete({
-    where: {
-      id,
-    },
-  });
-
-  return true;
 }
