@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import Link from "next/link";
 
@@ -7,6 +7,11 @@ import {
 } from "next/navigation";
 
 import { useState } from "react";
+
+import {
+  STARTUP_STAGES,
+  STARTUP_STATUSES,
+} from "@/types/startup";
 
 import type {
   Startup,
@@ -202,17 +207,11 @@ export default function StartupDetail({
               fieldClasses
             }
           >
-            <option value="Pre-Seed">
-              Pre-Seed
-            </option>
-
-            <option value="Seed">
-              Seed
-            </option>
-
-            <option value="Series A">
-              Series A
-            </option>
+            {STARTUP_STAGES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -234,21 +233,11 @@ export default function StartupDetail({
               fieldClasses
             }
           >
-            <option value="New">
-              New
-            </option>
-
-            <option value="Reviewing">
-              Reviewing
-            </option>
-
-            <option value="Due Diligence">
-              Due Diligence
-            </option>
-
-            <option value="Passed">
-              Passed
-            </option>
+            {STARTUP_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
           </select>
         </div>
 

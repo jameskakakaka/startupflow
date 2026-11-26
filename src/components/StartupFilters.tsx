@@ -1,3 +1,7 @@
+import {
+  STARTUP_STATUSES,
+} from "@/types/startup";
+
 import type { StartupStatus } from "@/types/startup";
 
 type StartupFiltersProps = {
@@ -40,16 +44,11 @@ export default function StartupFilters({
         className="rounded-lg border px-4 py-2"
       >
         <option value="All">All Status</option>
-        <option value="New">New</option>
-        <option value="Reviewing">
-          Reviewing
-        </option>
-        <option value="Due Diligence">
-          Due Diligence
-        </option>
-        <option value="Passed">
-          Passed
-        </option>
+        {STARTUP_STATUSES.map((s) => (
+          <option key={s} value={s}>
+            {s}
+          </option>
+        ))}
       </select>
     </div>
   );
