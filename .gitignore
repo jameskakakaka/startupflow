@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -50,7 +51,6 @@ next-env.d.ts
 .env.production.local
 
 
-echo '!.env.example' >> .gitignore
 
 # Local AI/editor tooling
 .agents/
