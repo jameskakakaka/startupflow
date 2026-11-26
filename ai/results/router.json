@@ -1,0 +1,293 @@
+{
+  "baseline_frozen_logreg": {
+    "val": {
+      "accuracy": 0.9666666666666667,
+      "macro_f1": 0.9232323232323232,
+      "per_class": {
+        "memo_question": {
+          "precision": 0.9411764705882353,
+          "recall": 1.0,
+          "f1": 0.9696969696969697
+        },
+        "out_of_domain": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "prompt_injection": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "confusion": [
+        [
+          16,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "test_heldout": {
+      "accuracy": 0.9253731343283582,
+      "macro_f1": 0.9025641025641026,
+      "per_class": {
+        "memo_question": {
+          "precision": 1.0,
+          "recall": 0.875,
+          "f1": 0.9333333333333333
+        },
+        "out_of_domain": {
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8
+        },
+        "prompt_injection": {
+          "precision": 0.95,
+          "recall": 1.0,
+          "f1": 0.9743589743589743
+        }
+      },
+      "confusion": [
+        [
+          35,
+          4,
+          1
+        ],
+        [
+          0,
+          8,
+          0
+        ],
+        [
+          0,
+          0,
+          19
+        ]
+      ]
+    },
+    "test_handwritten": {
+      "accuracy": 0.9,
+      "macro_f1": 0.8993265993265993,
+      "per_class": {
+        "memo_question": {
+          "precision": 0.8333333333333334,
+          "recall": 1.0,
+          "f1": 0.9090909090909091
+        },
+        "out_of_domain": {
+          "precision": 0.9,
+          "recall": 0.9,
+          "f1": 0.9
+        },
+        "prompt_injection": {
+          "precision": 1.0,
+          "recall": 0.8,
+          "f1": 0.888888888888889
+        }
+      },
+      "confusion": [
+        [
+          10,
+          0,
+          0
+        ],
+        [
+          1,
+          9,
+          0
+        ],
+        [
+          1,
+          1,
+          8
+        ]
+      ]
+    }
+  },
+  "finetune": {
+    "val": {
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "per_class": {
+        "memo_question": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "out_of_domain": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "prompt_injection": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "confusion": [
+        [
+          16,
+          0,
+          0
+        ],
+        [
+          0,
+          3,
+          0
+        ],
+        [
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "test_heldout": {
+      "accuracy": 0.9104477611940298,
+      "macro_f1": 0.877859677859678,
+      "per_class": {
+        "memo_question": {
+          "precision": 1.0,
+          "recall": 0.875,
+          "f1": 0.9333333333333333
+        },
+        "out_of_domain": {
+          "precision": 0.5714285714285714,
+          "recall": 1.0,
+          "f1": 0.7272727272727273
+        },
+        "prompt_injection": {
+          "precision": 1.0,
+          "recall": 0.9473684210526315,
+          "f1": 0.972972972972973
+        }
+      },
+      "confusion": [
+        [
+          35,
+          5,
+          0
+        ],
+        [
+          0,
+          8,
+          0
+        ],
+        [
+          0,
+          1,
+          18
+        ]
+      ]
+    },
+    "test_handwritten": {
+      "accuracy": 0.8,
+      "macro_f1": 0.7888888888888889,
+      "per_class": {
+        "memo_question": {
+          "precision": 0.9,
+          "recall": 0.9,
+          "f1": 0.9
+        },
+        "out_of_domain": {
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8
+        },
+        "prompt_injection": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        }
+      },
+      "confusion": [
+        [
+          9,
+          1,
+          0
+        ],
+        [
+          0,
+          10,
+          0
+        ],
+        [
+          1,
+          4,
+          5
+        ]
+      ]
+    }
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.0298819490101025,
+      "val_macro_f1": 0.23188405797101452,
+      "seconds": 110.5,
+      "selected": true
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.7597967334415602,
+      "val_macro_f1": 0.23188405797101452,
+      "seconds": 92.9
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.4804206840370012,
+      "val_macro_f1": 0.9232323232323232,
+      "seconds": 70.6,
+      "selected": true
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.24626793550408405,
+      "val_macro_f1": 1.0,
+      "seconds": 94.9,
+      "selected": true
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.11760733794906865,
+      "val_macro_f1": 1.0,
+      "seconds": 87.9
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.06854631103899168,
+      "val_macro_f1": 1.0,
+      "seconds": 80.3
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.05141394245235816,
+      "val_macro_f1": 1.0,
+      "seconds": 72.7
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.045104331620361496,
+      "val_macro_f1": 1.0,
+      "seconds": 62.7
+    }
+  ],
+  "sizes": {
+    "train": 184,
+    "val": 30,
+    "test_heldout": 67,
+    "test_handwritten": 30
+  }
+}

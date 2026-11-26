@@ -99,7 +99,9 @@ def metrics(y: torch.Tensor, p: torch.Tensor) -> dict:
     }
 
 
-@torch.inference_mode()
+# no_grad, not inference_mode: inference-mode tensors cannot be fed to a layer that is
+# being trained (autograd refuses to save them for backward).
+@torch.no_grad()
 def embed_frozen(encoder, tok, texts: list[str]) -> torch.Tensor:
     out = []
     for ids, mask, _ in batches(texts, torch.zeros(len(texts), dtype=torch.long), tok, 64, False):
@@ -123,14 +125,25 @@ def train_baseline(tok, splits) -> dict:
         return {k: metrics(splits[k][1], clf(feats[k]).argmax(-1)) for k in splits if k != "train"}
 
 
-def train_finetune(tok, splits, epochs: int = 3, lr: float = 3e-5, bs: int = 16) -> tuple[dict, list]:
+def train_finetune(
+    tok, splits, epochs: int = 8, lr: float = 3e-5, head_lr: float = 1e-3, bs: int = 16
+) -> tuple[dict, list]:
     set_seed()
     model = Router()
     texts, labels = splits["train"]
     steps = epochs * ((len(texts) + bs - 1) // bs)
-    opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
+    # Run 1 used one lr (3e-5) for everything and collapsed to the majority class: the
+    # randomly initialised head barely moved in 36 steps. Pretrained encoder weights need a
+    # small lr (don't destroy them); the new head needs a large one.
+    opt = torch.optim.AdamW(
+        [
+            {"params": model.encoder.parameters(), "lr": lr},
+            {"params": model.head.parameters(), "lr": head_lr},
+        ],
+        weight_decay=0.01,
+    )
     sched = get_linear_schedule_with_warmup(opt, int(0.1 * steps), steps)
-    history = []
+    history, best_f1, best_state = [], -1.0, None
     for epoch in range(1, epochs + 1):
         model.train()
         t0, total, n = time.time(), 0.0, 0
@@ -152,6 +165,11 @@ def train_finetune(tok, splits, epochs: int = 3, lr: float = 3e-5, bs: int = 16)
             }
         )
         print(history[-1])
+        if val["macro_f1"] > best_f1:  # model selection on val only, never on test
+            best_f1 = val["macro_f1"]
+            best_state = {k: v.detach().clone() for k, v in model.state_dict().items()}
+            history[-1]["selected"] = True
+    model.load_state_dict(best_state)
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), MODEL_DIR / "router.pt")
     tok.save_pretrained(MODEL_DIR)

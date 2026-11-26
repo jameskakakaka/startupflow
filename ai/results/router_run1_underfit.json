@@ -1,0 +1,260 @@
+{
+  "baseline_frozen_logreg": {
+    "val": {
+      "accuracy": 0.9666666666666667,
+      "macro_f1": 0.9232323232323232,
+      "per_class": {
+        "memo_question": {
+          "precision": 0.9411764705882353,
+          "recall": 1.0,
+          "f1": 0.9696969696969697
+        },
+        "out_of_domain": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "prompt_injection": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      },
+      "confusion": [
+        [
+          16,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          11
+        ]
+      ]
+    },
+    "test_heldout": {
+      "accuracy": 0.9253731343283582,
+      "macro_f1": 0.9025641025641026,
+      "per_class": {
+        "memo_question": {
+          "precision": 1.0,
+          "recall": 0.875,
+          "f1": 0.9333333333333333
+        },
+        "out_of_domain": {
+          "precision": 0.6666666666666666,
+          "recall": 1.0,
+          "f1": 0.8
+        },
+        "prompt_injection": {
+          "precision": 0.95,
+          "recall": 1.0,
+          "f1": 0.9743589743589743
+        }
+      },
+      "confusion": [
+        [
+          35,
+          4,
+          1
+        ],
+        [
+          0,
+          8,
+          0
+        ],
+        [
+          0,
+          0,
+          19
+        ]
+      ]
+    },
+    "test_handwritten": {
+      "accuracy": 0.9,
+      "macro_f1": 0.8993265993265993,
+      "per_class": {
+        "memo_question": {
+          "precision": 0.8333333333333334,
+          "recall": 1.0,
+          "f1": 0.9090909090909091
+        },
+        "out_of_domain": {
+          "precision": 0.9,
+          "recall": 0.9,
+          "f1": 0.9
+        },
+        "prompt_injection": {
+          "precision": 1.0,
+          "recall": 0.8,
+          "f1": 0.888888888888889
+        }
+      },
+      "confusion": [
+        [
+          10,
+          0,
+          0
+        ],
+        [
+          1,
+          9,
+          0
+        ],
+        [
+          1,
+          1,
+          8
+        ]
+      ]
+    }
+  },
+  "finetune": {
+    "val": {
+      "accuracy": 0.5333333333333333,
+      "macro_f1": 0.23188405797101452,
+      "per_class": {
+        "memo_question": {
+          "precision": 0.5333333333333333,
+          "recall": 1.0,
+          "f1": 0.6956521739130436
+        },
+        "out_of_domain": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "prompt_injection": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "confusion": [
+        [
+          16,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0
+        ],
+        [
+          11,
+          0,
+          0
+        ]
+      ]
+    },
+    "test_heldout": {
+      "accuracy": 0.6119402985074627,
+      "macro_f1": 0.3256464011180992,
+      "per_class": {
+        "memo_question": {
+          "precision": 0.6060606060606061,
+          "recall": 1.0,
+          "f1": 0.7547169811320755
+        },
+        "out_of_domain": {
+          "precision": 1.0,
+          "recall": 0.125,
+          "f1": 0.2222222222222222
+        },
+        "prompt_injection": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "confusion": [
+        [
+          40,
+          0,
+          0
+        ],
+        [
+          7,
+          1,
+          0
+        ],
+        [
+          19,
+          0,
+          0
+        ]
+      ]
+    },
+    "test_handwritten": {
+      "accuracy": 0.36666666666666664,
+      "macro_f1": 0.23154623154623155,
+      "per_class": {
+        "memo_question": {
+          "precision": 0.3448275862068966,
+          "recall": 1.0,
+          "f1": 0.5128205128205129
+        },
+        "out_of_domain": {
+          "precision": 1.0,
+          "recall": 0.1,
+          "f1": 0.18181818181818182
+        },
+        "prompt_injection": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "confusion": [
+        [
+          10,
+          0,
+          0
+        ],
+        [
+          9,
+          1,
+          0
+        ],
+        [
+          10,
+          0,
+          0
+        ]
+      ]
+    }
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.0201396786648294,
+      "val_macro_f1": 0.23703703703703705,
+      "seconds": 102.7
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.7965651957885079,
+      "val_macro_f1": 0.23188405797101452,
+      "seconds": 70.8
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.6836683620577273,
+      "val_macro_f1": 0.23188405797101452,
+      "seconds": 97.2
+    }
+  ],
+  "sizes": {
+    "train": 184,
+    "val": 30,
+    "test_heldout": 67,
+    "test_handwritten": 30
+  }
+}
