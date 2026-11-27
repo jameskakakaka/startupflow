@@ -1,8 +1,17 @@
 # StartupFlow + Deal Memo Copilot
 
 **A deal-pipeline tracker for early-stage investors, extended with a bilingual
-(Vietnamese/English) RAG assistant whose retrieval, grounding and latency are measured
-rather than claimed.**
+(Vietnamese/English) RAG assistant, a tool-calling agent and a PyTorch query router,
+with retrieval, grounding, agent and latency results measured rather than claimed.**
+
+| Highlight | Measured result |
+|---|---|
+| Hybrid retrieval (BM25 + e5 + RRF), 15-config ablation | Recall@5 **1.00**, Recall@3 **0.97** on 42 questions |
+| Failure analysis on a 0.5B generator | false "not found" **16 → 8 / 32**; answer precision trade-off reported |
+| Hallucination checks | numeric + entity checks; a 0.5B LLM judge shown unreliable (27/31 "supported") |
+| Tool-calling agent, 3 tools | tool choice **5/8**, answers **4/8**, failures traced step by step |
+| PyTorch fine-tune vs linear probe | macro-F1 0.79 vs **0.90** on hand-written queries (overfitting diagnosed) |
+| Serving | FastAPI with timeouts; query cache: retrieval p50 83 ms → 0.2 ms |
 
 Investment teams keep startup notes as free-text memos. Finding "what valuation is
 PayNest asking?" or "SoKa Lend ứng trước bao nhiêu %?" means opening each memo. The
@@ -245,6 +254,47 @@ What I learned:
 
 The router is an experiment and is **not** wired into the serving path.
 
+## Tool-calling agent
+
+`ai/startupflow_ai/agent.py` is a hand-written agent loop (no framework) over Qwen2.5's
+native `<tool_call>` format, with three tools:
+
+| Tool | What it does | Safety |
+|---|---|---|
+| `search_memos(query)` | hybrid RAG search, top-3 chunks | output truncated before it re-enters the prompt |
+| `calculator(expression)` | exact arithmetic | parsed with `ast`; only numbers and `+ - * / **` are allowed, plus an exponent cap |
+| `list_startups(status?, stage?)` | structured pipeline table parsed from the memos | accent/case-insensitive filters |
+
+Each step logs the tool, the arguments, the result, ok/error and latency. Arguments are
+validated with Pydantic. Unknown tools, invalid arguments and tool errors are returned to
+the model as messages, never raised. The loop stops after 4 steps. Unit tests use a
+scripted fake LLM (`ai/tests/test_agent.py`), so the loop logic is tested
+deterministically without a model.
+
+**Eval** (`python eval/run_agent_eval.py`, 8 hand-written tasks, Qwen2.5-0.5B on CPU, idle machine):
+
+| id | task | expected tools | used | answer |
+|---|---|---|---|---|
+| a1–a3 | filter the pipeline by status/stage (EN + VI) | list_startups | ✅ | ✅ 3/3 |
+| a4 | "VíXanh đang gọi vốn bao nhiêu?" | search_memos | none | ❌ |
+| a5 | 15% of 96 billion VND | calculator | ✅ | ❌ |
+| a6 | PayNest + CareLink raise, total | search + calculator | none | ❌ |
+| a7 | SoKa Lend NPL × 2 | search + calculator | calculator | ❌ |
+| a8 | weather (out of scope) | none | none | ✅ |
+
+**Result: tool selection 5/8, final answer 4/8**, ~8–20 s per task. Failure analysis
+(full step logs in `ai/results/agent.jsonl`):
+- **a4, a6: plans without acting.** The model *writes* "I would need to search the memos"
+  but never emits a tool call.
+- **a5: wrong transcription before the tool.** It turned "96 billion" into `9600000000`.
+  The calculator was right; its input was wrong.
+- **a7: skipped a step.** It sent `"SoKa Lend / 2"` to the calculator, got a syntax error
+  back, and gave up instead of searching first.
+
+None of these is a bug in the loop or the tools; they are the limits of a 0.5B model's
+multi-step tool use. Next steps: a 7B tool-tuned model, a planner that forces "search
+before calculate" for questions that name a company, and few-shot tool-use examples.
+
 ## Limitations (honest)
 
 - 20 synthetic memos (~4k words) is tiny, so the metrics have wide error bars (one
@@ -275,8 +325,9 @@ The router is an experiment and is **not** wired into the serving path.
 src/                 Next.js app (dashboard, CRUD API, /ask proxy) + Vitest tests
 prisma/              schema + migrations (incl. CHECK constraints)
 ai/startupflow_ai/   text, chunking, bm25, dense, hybrid, retriever, generate, grounding, pipeline, api
-ai/eval/             retrieval eval, answer eval, verification replay, load test
+ai/eval/             retrieval / answer / agent eval, verification replay, load test
 ai/router/           PyTorch fine-tuning of the query router (data + train)
+ai/startupflow_ai/agent.py  tool-calling agent (search, calculator, pipeline table)
 ai/data/             synthetic corpus + gold.jsonl
 ai/results/          committed outputs of the eval scripts
 docs/fundamentals.md concepts explained in this project's terms
